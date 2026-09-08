@@ -1,19 +1,35 @@
 import hashlib
+import hmac
 import json
 import os
 import re
 import secrets
 import sqlite3
 import time
+from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, redirect, render_template_string, request, session, url_for
 
 
 WIDTH = 10
 HEIGHT = 16
 MAX_BODY = 24 * 1024
 NAME_RE = re.compile(r"^[^<>\x00-\x1f]{1,28}$")
+
+ADMIN_LOGIN = """<!doctype html><html lang="ko"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Bounce Lab Admin</title>
+<style>body{margin:0;background:#07101c;color:#eef5fb;font:16px system-ui}main{max-width:420px;margin:12vh auto;padding:28px}h1{font-size:34px}p{color:#98aabd}input,button{width:100%;padding:15px;margin-top:12px;border:0;border-radius:8px;font:inherit}input{background:#111d2d;color:white}button{background:#39ffc4;color:#05251c;font-weight:800}.error{color:#ff667e}</style>
+<main><h1>BOUNCE LAB ADMIN</h1><p>관리자 비밀번호를 입력하세요.</p>{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post"><input name="password" type="password" autocomplete="current-password" required autofocus><button>로그인</button></form></main></html>"""
+
+ADMIN_CONSOLE = """<!doctype html><html lang="ko"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Bounce Lab Admin</title>
+<style>body{margin:0;background:#07101c;color:#eef5fb;font:15px system-ui}main{max-width:920px;margin:auto;padding:30px 18px}header{display:flex;align-items:center;justify-content:space-between}h1{font-size:30px}table{width:100%;border-collapse:collapse;background:#0d1828}th,td{padding:12px 10px;border-bottom:1px solid #22344b;text-align:left}th{color:#8398af;font-size:12px}button{border:0;border-radius:6px;padding:9px 13px;font-weight:750;background:#ff546d;color:white}.restore{background:#39ffc4;color:#05251c}.muted{color:#8295ab}.hidden{opacity:.58}@media(max-width:700px){.wide{display:none}th,td{padding:10px 6px;font-size:12px}}</style>
+<main><header><h1>MAP ADMIN</h1><form method="post" action="{{ url_for('admin_logout') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button>로그아웃</button></form></header>
+<p class="muted">삭제 대신 숨김 처리하므로 언제든 복구할 수 있습니다.</p><table><thead><tr><th>맵</th><th>제작자</th><th class="wide">업로드</th><th>기록</th><th>상태</th><th></th></tr></thead><tbody>
+{% for map in maps %}<tr class="{% if map.hidden %}hidden{% endif %}"><td>{{ map.name }}<br><span class="muted">{{ map.id }}</span></td><td>{{ map.author }}</td><td class="wide">{{ map.uploaded }}</td><td>{{ map.plays }}회 / {{ map.completions }}클리어</td><td>{% if map.hidden %}숨김{% else %}공개{% endif %}</td><td>{% if not map.official %}<form method="post" action="{{ url_for('admin_map_action', map_id=map.id, action='restore' if map.hidden else 'hide') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="{% if map.hidden %}restore{% endif %}">{% if map.hidden %}복구{% else %}숨기기{% endif %}</button></form>{% else %}<span class="muted">SYSTEM</span>{% endif %}</td></tr>{% endfor %}
+</tbody></table></main></html>"""
 
 
 def _default_maps():
@@ -61,6 +77,10 @@ def create_app(database_path=None):
     app.config["MAX_CONTENT_LENGTH"] = MAX_BODY
     app.config["DATABASE"] = str(database_path or os.getenv(
         "BOUNCELAB_MAP_DB", "/home/ghtnql/BounceLab/Backend/data/maps.db"))
+    app.config["ADMIN_PASSWORD"] = os.getenv("BOUNCELAB_ADMIN_PASSWORD", "")
+    app.secret_key = os.getenv("BOUNCELAB_SESSION_SECRET") or secrets.token_hex(32)
+    app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Strict",
+                      SESSION_COOKIE_SECURE=os.getenv("BOUNCELAB_COOKIE_SECURE", "1") != "0")
     Path(app.config["DATABASE"]).parent.mkdir(parents=True, exist_ok=True)
     _initialize(app.config["DATABASE"])
 
@@ -71,7 +91,54 @@ def create_app(database_path=None):
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
         return response
+
+    @app.route("/admin", methods=["GET", "POST"])
+    def admin_console():
+        password = app.config["ADMIN_PASSWORD"]
+        if not password:
+            return "Admin console is not configured", 503
+        error = ""
+        if request.method == "POST" and not session.get("admin"):
+            supplied = request.form.get("password", "")
+            if hmac.compare_digest(supplied, password):
+                session.clear()
+                session["admin"] = True
+                session["csrf"] = secrets.token_urlsafe(24)
+                return redirect(url_for("admin_console"))
+            error = "비밀번호가 맞지 않습니다."
+        if not session.get("admin"):
+            return render_template_string(ADMIN_LOGIN, error=error), 401 if error else 200
+        with _connect(app.config["DATABASE"]) as db:
+            rows = db.execute("SELECT * FROM maps ORDER BY created_at DESC").fetchall()
+        maps = []
+        for row in rows:
+            item = dict(row)
+            item["uploaded"] = datetime.fromtimestamp(row["created_at"]).astimezone().strftime("%Y-%m-%d %H:%M:%S")
+            item["official"] = row["id"].startswith("official-")
+            maps.append(item)
+        return render_template_string(ADMIN_CONSOLE, maps=maps, csrf=session["csrf"])
+
+    @app.post("/admin/maps/<map_id>/<action>")
+    def admin_map_action(map_id, action):
+        if not session.get("admin"):
+            return "Forbidden", 403
+        if not hmac.compare_digest(request.form.get("csrf", ""), session.get("csrf", "")):
+            return "Invalid CSRF token", 403
+        if action not in ("hide", "restore"):
+            return "Unknown action", 400
+        hidden = 1 if action == "hide" else 0
+        with _connect(app.config["DATABASE"]) as db:
+            db.execute("UPDATE maps SET hidden = ? WHERE id = ? AND id NOT LIKE 'official-%'", (hidden, map_id))
+        return redirect(url_for("admin_console"))
+
+    @app.post("/admin/logout")
+    def admin_logout():
+        if not hmac.compare_digest(request.form.get("csrf", ""), session.get("csrf", "")):
+            return "Invalid CSRF token", 403
+        session.clear()
+        return redirect(url_for("admin_console"))
 
     @app.route("/api/<path:_>", methods=["OPTIONS"])
     def options(_):

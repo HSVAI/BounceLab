@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Bounce Lab Admin</title>
+<style>
+body{margin:0;background:#07101c;color:#eef5fb;font:16px system-ui}main{max-width:440px;margin:18vh auto;padding:28px;text-align:center}h1{font-size:34px}p{color:#91a4b9}a{color:#39ffc4}
+</style>
+<main><h1>BOUNCE LAB ADMIN</h1><p id="status">관리 서버에 연결 중…</p></main>
+<script>
+fetch('../api.json?t='+Date.now(),{cache:'no-store'}).then(function(response){
+  if(!response.ok) throw new Error('config');
+  return response.json();
+}).then(function(config){
+  if(!config.baseUrl || !config.baseUrl.startsWith('https://')) throw new Error('url');
+  location.replace(config.baseUrl.replace(/\/$/,'')+'/admin');
+}).catch(function(){
+  document.getElementById('status').textContent='관리 서버에 연결할 수 없습니다. 잠시 후 새로고침하세요.';
+});
+</script>
+</html>

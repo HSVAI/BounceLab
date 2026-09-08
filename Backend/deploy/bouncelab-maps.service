@@ -8,6 +8,7 @@ Type=simple
 WorkingDirectory=/home/ghtnql/BounceLab/Backend
 Environment=BOUNCELAB_MAP_DB=/home/ghtnql/BounceLab/Backend/data/maps.db
 Environment=BOUNCELAB_MAP_PORT=8790
+EnvironmentFile=/home/ghtnql/.config/bouncelab/admin.env
 ExecStart=/home/ghtnql/BounceLab/Backend/.venv/bin/python /home/ghtnql/BounceLab/Backend/run.py
 Restart=on-failure
 RestartSec=3

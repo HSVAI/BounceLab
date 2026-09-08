@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from bouncelab_maps import HEIGHT, WIDTH, _default_maps, create_app
@@ -37,6 +38,23 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(fork[2][WIDTH + 4], 1)
         self.assertEqual(tower[2].count(4), 6)
         self.assertEqual(tower[2][8 * WIDTH + 8], 0)
+
+    def test_admin_can_hide_and_restore_user_map(self):
+        with patch.dict("os.environ", {"BOUNCELAB_ADMIN_PASSWORD": "test-password",
+                                        "BOUNCELAB_SESSION_SECRET": "test-session-secret",
+                                        "BOUNCELAB_COOKIE_SECURE": "0"}):
+            app = create_app(Path(self.temp.name) / "admin.db")
+        client = app.test_client()
+        created = client.post("/api/maps", json=valid_map()).get_json()["id"]
+        self.assertEqual(client.get("/admin").status_code, 200)
+        self.assertEqual(client.post("/admin", data={"password": "wrong"}).status_code, 401)
+        self.assertEqual(client.post("/admin", data={"password": "test-password"}).status_code, 302)
+        with client.session_transaction() as state:
+            csrf = state["csrf"]
+        self.assertEqual(client.post(f"/admin/maps/{created}/hide", data={"csrf": csrf}).status_code, 302)
+        self.assertEqual(client.get(f"/api/maps/{created}").status_code, 404)
+        self.assertEqual(client.post(f"/admin/maps/{created}/restore", data={"csrf": csrf}).status_code, 302)
+        self.assertEqual(client.get(f"/api/maps/{created}").status_code, 200)
 
     def test_upload_round_trip_and_completion(self):
         created = self.client.post("/api/maps", json=valid_map())
