@@ -99,6 +99,14 @@ namespace BounceLab
             Call("Win");
             Check(Get<bool>("won"), "Goal completes level");
             yield return Screenshot("05-editor-clear.png");
+
+            Call("ShowBrowse");
+            float networkDeadline = Time.time + 15f;
+            while (Get<UnityEngine.UI.Text>("statusText").text == "LOADING MAPS..." && Time.time < networkDeadline)
+                yield return null;
+            Check(Get<string>("apiBase").StartsWith("https://"), "GitHub Pages API discovery");
+            Check(Get<UnityEngine.UI.Text>("statusText").text == "NEWEST MAPS", "Community maps load");
+            yield return Screenshot("06-community.png");
             Check(errors == 0, "No player errors");
             Debug.Log("BOUNCELAB_PLAYER_SMOKE_PASS");
             Application.Quit(0);
