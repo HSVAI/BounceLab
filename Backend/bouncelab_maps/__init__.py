@@ -35,19 +35,22 @@ def _default_maps():
 
     return [
         level("첫 번째 바운스", "SYSTEM",
-              [(x, 1) for x in range(5, 9)] + [(x, 3) for x in range(2, 7)] +
-              [(x, 5) for x in range(6, 9)] + [(x, 7) for x in range(2, 7)] +
-              [(x, 9) for x in range(6, 9)] + [(x, 11) for x in range(3, 7)],
-              [(1, 1)], (2, 1), (5, 12), [(6, 7)]),
+              [(x, 1) for x in range(4, 8)] + [(x, 3) for x in range(2, 5)] +
+              [(x, 5) for x in range(5, 8)] + [(x, 7) for x in range(2, 6)] +
+              [(x, 9) for x in range(5, 9)] + [(x, 11) for x in range(3, 7)],
+              [(8, 1), (1, 3), (8, 5), (1, 7)], (2, 1), (5, 12), [(4, 7)]),
         level("갈림길", "SYSTEM",
-              [(x, 1) for x in range(1, 5)] + [(x, 3) for x in range(3, 8)] +
-              [(x, 5) for x in range(1, 5)] + [(x, 7) for x in range(3, 8)] +
-              [(x, 9) for x in range(1, 5)] + [(x, 11) for x in range(3, 8)],
-              [(8, 1), (8, 7)], (7, 1), (6, 12), [(3, 7)]),
+              [(x, 1) for x in range(1, 5)] +
+              [(x, 3) for x in range(1, 4)] + [(x, 3) for x in range(6, 9)] +
+              [(x, 5) for x in range(3, 7)] +
+              [(x, 7) for x in range(1, 4)] + [(x, 7) for x in range(6, 9)] +
+              [(x, 9) for x in range(3, 7)] + [(x, 11) for x in range(5, 8)],
+              [(4, 1), (3, 5), (8, 7), (6, 9)], (7, 1), (6, 12), [(7, 7)]),
         level("스프링 타워", "SYSTEM",
               [(x, 1) for x in range(5, 9)] + [(x, 4) for x in range(2, 7)] +
               [(x, 7) for x in range(6, 9)] + [(x, 10) for x in range(2, 7)],
-              [(1, 1), (8, 8)], (2, 1), (5, 11), [(6, 1), (6, 4), (6, 7)]),
+              [(1, 1)], (2, 1), (5, 11),
+              [(5, 1), (6, 1), (5, 4), (6, 4), (6, 7), (7, 7)]),
     ]
 
 
