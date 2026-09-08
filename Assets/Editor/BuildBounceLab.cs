@@ -80,7 +80,7 @@ namespace BounceLab.Editor
                 .Replace("<html lang=\"en-us\">", "<html lang=\"ko\">")
                 .Replace("<title>Unity WebGL Player | Bounce Lab</title>", "<title>" + title + "</title>")
                 .Replace("// config.autoSyncPersistentDataPath = true;", "config.autoSyncPersistentDataPath = true;")
-                .Replace("// config.devicePixelRatio = 1;", "config.devicePixelRatio = 1;");
+                .Replace("// config.devicePixelRatio = 1;", "config.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 3);");
             File.WriteAllText(indexPath, html);
 
             string stylePath = Path.Combine(outputPath, "TemplateData/style.css");
