@@ -1,1 +1,1 @@
-5afad992a2a3c267f6ce46451e4b2e7336b9c9e82aa103e82a8b80cfe33fd9da  BounceLab-0.2.0.apk
+cc90d91350b06a79f615893edabd175d5e85cdda2f4cce7c08c646d8958d71bf  BounceLab-0.3.0.apk

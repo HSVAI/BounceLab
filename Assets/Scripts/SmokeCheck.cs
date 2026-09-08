@@ -33,6 +33,12 @@ namespace BounceLab
             yield return new WaitForSeconds(1);
             game = FindObjectOfType<BounceLabGame>();
             Check(game != null, "Game exists");
+            var audio = FindObjectOfType<BounceAudio>();
+            Check(audio != null && audio.MusicSampleCount > 300000, "Original music loop generated");
+            bool musicSetting = audio.MusicEnabled;
+            audio.ToggleMusic();
+            audio.ToggleMusic();
+            Check(audio.MusicEnabled == musicSetting, "Music toggle restores setting");
             Check(Get("mode").ToString() == "Home", "Home screen");
             yield return Screenshot("01-home.png");
 

@@ -23,7 +23,7 @@ namespace BounceLab.Editor
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
             PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)35;
-            PlayerSettings.Android.bundleVersionCode = 2;
+            PlayerSettings.Android.bundleVersionCode = 3;
             // First playable is a local-test APK, not a store release.
             PlayerSettings.Android.useCustomKeystore = false;
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
@@ -60,7 +60,7 @@ namespace BounceLab.Editor
         {
             PlayerSettings.companyName = "ghtnql";
             PlayerSettings.productName = "Bounce Lab";
-            PlayerSettings.bundleVersion = "0.2.0";
+            PlayerSettings.bundleVersion = "0.3.0";
             PlayerSettings.runInBackground = false;
             PlayerSettings.colorSpace = ColorSpace.Gamma;
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
@@ -84,7 +84,15 @@ namespace BounceLab.Editor
             Assert(MapRules.Validate(MapRules.Training()) == "", "Training map is valid");
             Assert(MapRules.IsSolid(MapRules.Block) && MapRules.IsSolid(MapRules.Spring), "Solid tiles");
             Assert(!MapRules.IsSolid(MapRules.Spike), "Spike is a trigger");
-            Debug.Log("BOUNCELAB_RULE_TESTS_PASS assertions=9");
+            string audioMetrics = BounceAudio.CompositionMetrics();
+            string[] audio = audioMetrics.Split(',');
+            Assert(audio.Length == 4 && int.Parse(audio[0]) > 300000, "Music loop duration");
+            Assert(float.Parse(audio[1], System.Globalization.CultureInfo.InvariantCulture) > .15f &&
+                float.Parse(audio[1], System.Globalization.CultureInfo.InvariantCulture) <= .8f, "Music peak range");
+            Assert(float.Parse(audio[2], System.Globalization.CultureInfo.InvariantCulture) > .025f && int.Parse(audio[3]) > 1000,
+                "Music energy and note activity");
+            Debug.Log("BOUNCELAB_AUDIO_METRICS samples,peak,rms,crossings=" + audioMetrics);
+            Debug.Log("BOUNCELAB_RULE_TESTS_PASS assertions=12");
         }
 
         private static void Assert(bool condition, string name)

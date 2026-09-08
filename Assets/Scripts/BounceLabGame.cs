@@ -27,6 +27,7 @@ namespace BounceLab
 
         private RectTransform root, page, board, ball;
         private Font font;
+        private BounceAudio sound;
         private Mode mode;
         private MapData currentMap, draft;
         private Image[] editorCells;
@@ -41,6 +42,8 @@ namespace BounceLab
         {
             Application.targetFrameRate = 60;
             Screen.orientation = ScreenOrientation.Portrait;
+            sound = GetComponent<BounceAudio>() ?? gameObject.AddComponent<BounceAudio>();
+            sound.Initialize();
             font = Resources.Load<Font>("Unifont") ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             BuildRoot();
             LoadDraft();
@@ -100,9 +103,13 @@ namespace BounceLab
             Button("COMMUNITY MAPS", new Vector2(760, 125), new Vector2(0, -145), yellow, page, ShowBrowse);
             Button("MAP MAKER", new Vector2(760, 125), new Vector2(0, -310), coral, page, ShowEditor);
             Label("HOLD LEFT / RIGHT · THE BALL BOUNCES BY ITSELF", 22, quiet, new Vector2(960, 60), new Vector2(0, -500), page);
+            Button(sound.MusicEnabled ? "BGM ON" : "BGM OFF", new Vector2(330, 78), new Vector2(-185, -590), panelColor, page,
+                () => { sound.ToggleMusic(); ShowHome(); });
+            Button(sound.SfxEnabled ? "SFX ON" : "SFX OFF", new Vector2(330, 78), new Vector2(185, -590), panelColor, page,
+                () => { sound.ToggleSfx(); ShowHome(); });
             statusText = Label(apiBase.Length > 0 ? "SERVER ONLINE" : "CONNECTING TO MAP SERVER...", 21,
-                apiBase.Length > 0 ? cyan : quiet, new Vector2(850, 50), new Vector2(0, -690), page);
-            Label("v0.2  ·  CREATE, UPLOAD, PLAY", 18, quiet, new Vector2(800, 40), new Vector2(0, -820), page);
+                apiBase.Length > 0 ? cyan : quiet, new Vector2(850, 50), new Vector2(0, -710), page);
+            Label("v0.3  ·  NEON REBOUND", 18, quiet, new Vector2(800, 40), new Vector2(0, -830), page);
         }
 
         private void StartPlay(MapData map, bool editorReturn)
@@ -200,7 +207,9 @@ namespace BounceLab
                     if (ballY - Radius >= top - .3f)
                     {
                         nextY = top + Radius;
-                        velocityY = leftTile == MapRules.Spring || rightTile == MapRules.Spring ? 13.2f : 9.6f;
+                        bool spring = leftTile == MapRules.Spring || rightTile == MapRules.Spring;
+                        velocityY = spring ? 13.2f : 9.6f;
+                        sound.PlayBounce(spring);
                         if (velocityY > 12) Flash(ball.anchoredPosition, yellow);
                     }
                 }
@@ -253,6 +262,7 @@ namespace BounceLab
             ball.GetComponent<Image>().color = coral;
             deathTimer = .6f;
             velocityX = velocityY = 0;
+            sound.PlayDeath();
             Debug.Log("BOUNCELAB_RESPAWN falls=" + deaths);
         }
 
@@ -261,6 +271,7 @@ namespace BounceLab
             if (won) return;
             won = true;
             control = 0;
+            sound.PlayClear();
             ball.GetComponent<Image>().color = yellow;
             var modal = Panel("Clear", page, new Vector2(870, 650), new Vector2(0, 30), new Color(.025f, .035f, .065f, .98f));
             Label("LEVEL CLEAR", 80, cyan, new Vector2(800, 130), new Vector2(0, 190), modal).fontStyle = FontStyle.Bold;
@@ -319,6 +330,7 @@ namespace BounceLab
                     if (draft.tiles[i] == brush) { draft.tiles[i] = MapRules.Empty; PaintVisual(i); }
             draft.tiles[index] = brush;
             draftRevision++;
+            sound.PlayPaint();
             PaintVisual(index);
             SaveDraftFromFields();
         }
@@ -573,7 +585,11 @@ namespace BounceLab
             image.raycastTarget = true;
             var button = image.gameObject.AddComponent<UnityEngine.UI.Button>(); button.targetGraphic = image;
             var colors = button.colors; colors.highlightedColor = Color.Lerp(color, Color.white, .18f); colors.pressedColor = Color.Lerp(color, background, .2f); button.colors = colors;
-            if (action != null) button.onClick.AddListener(action);
+            if (action != null)
+            {
+                button.onClick.AddListener(() => { if (sound != null) sound.PlayUi(); });
+                button.onClick.AddListener(action);
+            }
             Label(text, Mathf.RoundToInt(Mathf.Clamp(size.y * .27f, 18, 34)), color == panelColor || color == quiet ? Color.white : background,
                 size, Vector2.zero, image.rectTransform).fontStyle = FontStyle.Bold;
             return image.rectTransform;
