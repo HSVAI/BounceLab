@@ -1,0 +1,106 @@
+using System.IO;
+using BounceLab;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace BounceLab.Editor
+{
+    public static class BuildBounceLab
+    {
+        private const string ScenePath = "Assets/Scenes/Main.unity";
+
+        public static void BuildAndroid()
+        {
+            VerifyRules();
+            EnsureScene();
+            ConfigureCommon();
+            PlayerSettings.productName = "Bounce Lab";
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.ghtnql.bouncelab");
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
+            PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)35;
+            PlayerSettings.Android.bundleVersionCode = 2;
+            // First playable is a local-test APK, not a store release.
+            PlayerSettings.Android.useCustomKeystore = false;
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            UnityEditor.Android.AndroidExternalToolsSettings.sdkRootPath = "/opt/Unity/2022.3.62f3/Data/PlaybackEngines/AndroidPlayer/SDK";
+            UnityEditor.Android.AndroidExternalToolsSettings.ndkRootPath = "/opt/Unity/2022.3.62f3/Data/PlaybackEngines/AndroidPlayer/NDK";
+            UnityEditor.Android.AndroidExternalToolsSettings.jdkRootPath = "/opt/Unity/2022.3.62f3/Data/PlaybackEngines/AndroidPlayer/OpenJDK";
+            EditorUserBuildSettings.buildAppBundle = false;
+            EditorUserBuildSettings.development = false;
+            Directory.CreateDirectory("Builds/Android");
+            var report = BuildPipeline.BuildPlayer(new[] { ScenePath }, "Builds/Android/BounceLab.apk", BuildTarget.Android, BuildOptions.None);
+            if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                throw new System.Exception("Android build failed: " + report.summary.result);
+            Debug.Log("BOUNCELAB_ANDROID_BUILD_OK bytes=" + report.summary.totalSize);
+        }
+
+        public static void BuildLinux()
+        {
+            VerifyRules();
+            EnsureScene();
+            ConfigureCommon();
+            // Headless QA has no window manager to focus the player window.
+            PlayerSettings.runInBackground = true;
+            PlayerSettings.defaultScreenWidth = 450;
+            PlayerSettings.defaultScreenHeight = 800;
+            PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
+            Directory.CreateDirectory("Builds/Linux");
+            var report = BuildPipeline.BuildPlayer(new[] { ScenePath }, "Builds/Linux/BounceLab.x86_64", BuildTarget.StandaloneLinux64, BuildOptions.None);
+            if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                throw new System.Exception("Linux build failed: " + report.summary.result);
+        }
+
+        private static void ConfigureCommon()
+        {
+            PlayerSettings.companyName = "ghtnql";
+            PlayerSettings.productName = "Bounce Lab";
+            PlayerSettings.bundleVersion = "0.2.0";
+            PlayerSettings.runInBackground = false;
+            PlayerSettings.colorSpace = ColorSpace.Gamma;
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+        }
+
+        public static void VerifyRules()
+        {
+            var blank = MapRules.Blank();
+            Assert(MapRules.Validate(blank) == "", "Blank editor map is valid");
+            Assert(blank.tiles.Length == MapRules.Width * MapRules.Height, "Fixed map dimensions");
+            Assert(MapRules.Tile(blank, -1, 2) == MapRules.Block, "Outside map is a wall");
+            var missingStart = blank.Clone();
+            missingStart.tiles[MapRules.Index(2, 1)] = MapRules.Empty;
+            Assert(MapRules.Validate(missingStart) == "PLACE EXACTLY ONE START", "Start required");
+            var duplicateGoal = blank.Clone();
+            duplicateGoal.tiles[MapRules.Index(5, 5)] = MapRules.Goal;
+            Assert(MapRules.Validate(duplicateGoal) == "PLACE EXACTLY ONE GOAL", "Single goal required");
+            var invalidTile = blank.Clone();
+            invalidTile.tiles[3] = 99;
+            Assert(MapRules.Validate(invalidTile) == "UNKNOWN TILE", "Tile range validation");
+            Assert(MapRules.Validate(MapRules.Training()) == "", "Training map is valid");
+            Assert(MapRules.IsSolid(MapRules.Block) && MapRules.IsSolid(MapRules.Spring), "Solid tiles");
+            Assert(!MapRules.IsSolid(MapRules.Spike), "Spike is a trigger");
+            Debug.Log("BOUNCELAB_RULE_TESTS_PASS assertions=9");
+        }
+
+        private static void Assert(bool condition, string name)
+        {
+            if (!condition) throw new System.Exception("Rule test failed: " + name);
+        }
+
+        private static void EnsureScene()
+        {
+            if (File.Exists(ScenePath)) return;
+            Directory.CreateDirectory("Assets/Scenes");
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var game = new GameObject("Bounce Lab");
+            game.AddComponent<BounceLabGame>();
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            AssetDatabase.SaveAssets();
+        }
+    }
+}

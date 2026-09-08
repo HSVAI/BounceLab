@@ -1,0 +1,21 @@
+[Unit]
+Description=Bounce Lab community maps API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ghtnql/BounceLab/Backend
+Environment=BOUNCELAB_MAP_DB=/home/ghtnql/BounceLab/Backend/data/maps.db
+Environment=BOUNCELAB_MAP_PORT=8790
+ExecStart=/home/ghtnql/BounceLab/Backend/.venv/bin/python /home/ghtnql/BounceLab/Backend/run.py
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/ghtnql/BounceLab/Backend/data
+
+[Install]
+WantedBy=default.target

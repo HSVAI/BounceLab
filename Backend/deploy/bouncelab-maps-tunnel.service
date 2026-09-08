@@ -1,0 +1,13 @@
+[Unit]
+Description=HTTPS tunnel for Bounce Lab community maps
+After=network-online.target bouncelab-maps.service
+Wants=network-online.target bouncelab-maps.service
+
+[Service]
+Type=simple
+ExecStart=/home/ghtnql/.local/bin/cloudflared tunnel --no-autoupdate --protocol http2 --metrics 127.0.0.1:20242 --url http://127.0.0.1:8790
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

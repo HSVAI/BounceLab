@@ -1,0 +1,7 @@
+[Unit]
+Description=Publish current Bounce Lab API tunnel URL to GitHub Pages
+After=bouncelab-maps-tunnel.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/ghtnql/BounceLab/Backend/publish_tunnel_url.sh
