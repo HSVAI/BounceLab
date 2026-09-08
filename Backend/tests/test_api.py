@@ -31,8 +31,10 @@ class ApiTests(unittest.TestCase):
     def test_official_maps_have_balanced_shapes(self):
         first, fork, tower = _default_maps()
         self.assertEqual([first[0], fork[0], tower[0]], ["첫 번째 바운스", "갈림길", "스프링 타워"])
-        self.assertEqual(first[2].count(2), 4)
-        self.assertEqual(fork[2].count(2), 4)
+        self.assertEqual(first[2].count(2), 8)
+        self.assertEqual(first[2][14 * WIDTH + 6], 3)
+        self.assertEqual(fork[2].count(2), 1)
+        self.assertEqual(fork[2][WIDTH + 4], 1)
         self.assertEqual(tower[2].count(4), 6)
         self.assertEqual(tower[2][8 * WIDTH + 8], 0)
 
