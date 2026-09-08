@@ -2,6 +2,8 @@
 [Tt]emp/
 [Oo]bj/
 [Bb]uild/
+!docs/play/Build/
+!docs/play/Build/**
 [Bb]uilds/
 [Ll]ogs/
 [Uu]serSettings/

@@ -1,6 +1,6 @@
 # Bounce Lab
 
-공이 자동으로 튀는 정밀 플랫폼 게임과 모바일 맵 에디터를 하나의 APK에 담은 프로젝트입니다.
+공이 자동으로 튀는 정밀 플랫폼 게임과 모바일 맵 에디터를 웹과 Android 앱으로 제공하는 프로젝트입니다.
 
 ## 플레이
 
@@ -34,9 +34,11 @@ Unity 2022.3.62f3 Personal과 Android Build Support를 사용합니다.
 ./build.sh test
 ./build.sh linux
 ./build.sh android
+./build.sh webgl
 ```
 
-Android 산출물은 `Builds/Android/BounceLab.apk`입니다. Android 6.0 이상, ARM64, OpenGL ES 3을 대상으로 합니다.
+Android 산출물은 `Builds/Android/BounceLab.apk`, 브라우저 산출물은 `Builds/WebGL/`입니다. Android 6.0 이상, ARM64, OpenGL ES 3을 대상으로 합니다.
+배포 페이지와 웹 플레이 주소는 <https://hsvai.github.io/BounceLab/> 및 <https://hsvai.github.io/BounceLab/play/>입니다.
 
 ## 백엔드
 

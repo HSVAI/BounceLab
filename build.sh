@@ -5,8 +5,9 @@ unity_editor="${UNITY_EDITOR:-/opt/Unity/2022.3.62f3/Unity}"
 case "${1:-android}" in
   android) method=BuildAndroid; target=Android ;;
   linux) method=BuildLinux; target=Linux64 ;;
+  webgl) method=BuildWebGL; target=WebGL ;;
   test) method=VerifyRules; target=Linux64 ;;
-  *) echo 'Usage: ./build.sh [android|linux|test]' >&2; exit 2 ;;
+  *) echo 'Usage: ./build.sh [android|linux|webgl|test]' >&2; exit 2 ;;
 esac
 mkdir -p Logs
 "$unity_editor" -batchmode -nographics -quit -projectPath "$PWD" \

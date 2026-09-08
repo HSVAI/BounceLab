@@ -56,6 +56,45 @@ namespace BounceLab.Editor
                 throw new System.Exception("Linux build failed: " + report.summary.result);
         }
 
+        public static void BuildWebGL()
+        {
+            VerifyRules();
+            EnsureScene();
+            ConfigureCommon();
+            PlayerSettings.defaultScreenWidth = 450;
+            PlayerSettings.defaultScreenHeight = 800;
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+            PlayerSettings.WebGL.decompressionFallback = false;
+            Directory.CreateDirectory("Builds/WebGL");
+            var report = BuildPipeline.BuildPlayer(new[] { ScenePath }, "Builds/WebGL", BuildTarget.WebGL, BuildOptions.None);
+            if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                throw new System.Exception("WebGL build failed: " + report.summary.result);
+            TuneWebGLTemplate("Builds/WebGL", "Bounce Lab — Web Play", "#050a12");
+            Debug.Log("BOUNCELAB_WEBGL_BUILD_OK bytes=" + report.summary.totalSize);
+        }
+
+        private static void TuneWebGLTemplate(string outputPath, string title, string background)
+        {
+            string indexPath = Path.Combine(outputPath, "index.html");
+            string html = File.ReadAllText(indexPath)
+                .Replace("<html lang=\"en-us\">", "<html lang=\"ko\">")
+                .Replace("<title>Unity WebGL Player | Bounce Lab</title>", "<title>" + title + "</title>")
+                .Replace("// config.autoSyncPersistentDataPath = true;", "config.autoSyncPersistentDataPath = true;")
+                .Replace("// config.devicePixelRatio = 1;", "config.devicePixelRatio = 1;");
+            File.WriteAllText(indexPath, html);
+
+            string stylePath = Path.Combine(outputPath, "TemplateData/style.css");
+            string css = File.ReadAllText(stylePath);
+            const string marker = "/* RESPONSIVE_PORTRAIT */";
+            if (!css.Contains(marker))
+            {
+                css += "\n" + marker + "\nhtml,body{width:100%;height:100%;overflow:hidden;background:" + background + ";}" +
+                    "#unity-container,#unity-container.unity-desktop,#unity-container.unity-mobile{position:fixed;inset:0;left:0;top:0;transform:none;width:min(100vw,56.25vh);height:min(100vh,177.7778vw);margin:auto;}" +
+                    "#unity-canvas,#unity-canvas.unity-mobile{display:block;width:100%!important;height:100%!important;}#unity-footer{display:none;}\n";
+                File.WriteAllText(stylePath, css);
+            }
+        }
+
         private static void ConfigureCommon()
         {
             PlayerSettings.companyName = "ghtnql";
