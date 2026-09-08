@@ -34,7 +34,7 @@ namespace BounceLab
         private Text statusText, timerText, deathText, brushText;
         private InputField nameInput, authorInput;
         private int brush = MapRules.Block, control, deaths, pageVersion, draftRevision, clearedRevision = -1;
-        private float ballX, ballY, velocityX, velocityY, elapsed, deathTimer;
+        private float ballX, ballY, velocityX, velocityY, elapsed, deathTimer, backExitDeadline;
         private bool won, returnToEditor;
         private string apiBase = "";
 
@@ -53,6 +53,11 @@ namespace BounceLab
 
         private void Update()
         {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                HandleBack();
+                return;
+            }
             if (mode != Mode.Play || won) return;
             if (deathTimer > 0)
             {
@@ -94,6 +99,7 @@ namespace BounceLab
 
         private void ShowHome()
         {
+            backExitDeadline = 0;
             NewPage(Mode.Home);
             Label("B O U N C E   L A B", 28, cyan, new Vector2(900, 60), new Vector2(0, 720), page);
             var title = Label("MAKE IT.\nBOUNCE IT.", 116, Color.white, new Vector2(940, 320), new Vector2(0, 450), page);
@@ -109,7 +115,47 @@ namespace BounceLab
                 () => { sound.ToggleSfx(); ShowHome(); });
             statusText = Label(apiBase.Length > 0 ? "SERVER ONLINE" : "CONNECTING TO MAP SERVER...", 21,
                 apiBase.Length > 0 ? cyan : quiet, new Vector2(850, 50), new Vector2(0, -710), page);
-            Label("v0.3  ·  NEON REBOUND", 18, quiet, new Vector2(800, 40), new Vector2(0, -830), page);
+            Label("v0.3.1  ·  NEON REBOUND", 18, quiet, new Vector2(800, 40), new Vector2(0, -830), page);
+        }
+
+        private void HandleBack()
+        {
+            control = 0;
+            if (mode == Mode.Home)
+            {
+                if (backExitDeadline > 0 && Time.unscaledTime <= backExitDeadline)
+                {
+                    Debug.Log("BOUNCELAB_BACK_EXIT");
+                    Application.Quit();
+                    return;
+                }
+                backExitDeadline = Time.unscaledTime + 2f;
+                if (statusText != null)
+                {
+                    statusText.text = "PRESS BACK AGAIN TO EXIT";
+                    statusText.color = yellow;
+                }
+                StartCoroutine(ClearBackHint(backExitDeadline));
+                Debug.Log("BOUNCELAB_BACK_ARMED");
+            }
+            else
+            {
+                backExitDeadline = 0;
+                if (mode == Mode.Play && returnToEditor) ShowEditor();
+                else ShowHome();
+            }
+        }
+
+        private IEnumerator ClearBackHint(float expectedDeadline)
+        {
+            yield return new WaitForSecondsRealtime(2.05f);
+            if (mode != Mode.Home || Mathf.Abs(backExitDeadline - expectedDeadline) > .01f) yield break;
+            backExitDeadline = 0;
+            if (statusText != null)
+            {
+                statusText.text = apiBase.Length > 0 ? "SERVER ONLINE" : "SERVER OFFLINE · TRAINING STILL WORKS";
+                statusText.color = apiBase.Length > 0 ? cyan : coral;
+            }
         }
 
         private void StartPlay(MapData map, bool editorReturn)
@@ -429,7 +475,7 @@ namespace BounceLab
                     apiBase = config == null || config.baseUrl == null ? "" : config.baseUrl.TrimEnd('/');
                     ok = apiBase.StartsWith("https://");
                 }
-                if (mode == Mode.Home && statusText != null)
+                if (mode == Mode.Home && statusText != null && backExitDeadline <= Time.unscaledTime)
                 {
                     statusText.text = ok ? "SERVER ONLINE" : "SERVER OFFLINE · TRAINING STILL WORKS";
                     statusText.color = ok ? cyan : coral;

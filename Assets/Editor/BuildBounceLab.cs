@@ -23,7 +23,7 @@ namespace BounceLab.Editor
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
             PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)35;
-            PlayerSettings.Android.bundleVersionCode = 3;
+            PlayerSettings.Android.bundleVersionCode = 4;
             // First playable is a local-test APK, not a store release.
             PlayerSettings.Android.useCustomKeystore = false;
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
@@ -60,7 +60,7 @@ namespace BounceLab.Editor
         {
             PlayerSettings.companyName = "ghtnql";
             PlayerSettings.productName = "Bounce Lab";
-            PlayerSettings.bundleVersion = "0.3.0";
+            PlayerSettings.bundleVersion = "0.3.1";
             PlayerSettings.runInBackground = false;
             PlayerSettings.colorSpace = ColorSpace.Gamma;
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;

@@ -113,9 +113,22 @@ namespace BounceLab
             Check(Get<string>("apiBase").StartsWith("https://"), "GitHub Pages API discovery");
             Check(Get<UnityEngine.UI.Text>("statusText").text == "NEWEST MAPS", "Community maps load");
             yield return Screenshot("06-community.png");
+            Call("HandleBack");
+            Check(Get("mode").ToString() == "Home", "Back returns community to home");
+            Call("ShowEditor");
+            Call("HandleBack");
+            Check(Get("mode").ToString() == "Home", "Back returns editor to home");
+            Call("StartPlay", MapRules.Training(), false);
+            Call("HandleBack");
+            Check(Get("mode").ToString() == "Home", "Back returns play to home");
             Check(errors == 0, "No player errors");
+            Call("HandleBack");
+            Check(Get<float>("backExitDeadline") > Time.unscaledTime, "First back arms exit confirmation");
+            Check(Get<UnityEngine.UI.Text>("statusText").text == "PRESS BACK AGAIN TO EXIT", "Exit confirmation is visible");
             Debug.Log("BOUNCELAB_PLAYER_SMOKE_PASS");
-            Application.Quit(0);
+            Call("HandleBack");
+            yield return new WaitForSeconds(1f);
+            Check(false, "Back exits from home");
         }
 
         private IEnumerator Screenshot(string name)
