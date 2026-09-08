@@ -52,6 +52,35 @@ namespace BounceLab
             yield return new WaitForSeconds(.8f);
             Check(Get<float>("deathTimer") <= 0, "Automatic respawn");
 
+            float deadline = Time.time + 24f;
+            float nextTrace = Time.time;
+            int routeStage = 0;
+            while (!Get<bool>("won") && Time.time < deadline)
+            {
+                float y = Get<float>("ballY");
+                if (routeStage == 0 && y > 2.35f) routeStage++;
+                else if (routeStage == 1 && y > 4.35f) routeStage++;
+                else if (routeStage == 2 && y > 6.35f) routeStage++;
+                else if (routeStage == 3 && y > 8.35f) routeStage++;
+                else if (routeStage == 4 && y > 10.35f) routeStage++;
+                else if (routeStage == 5 && y > 12.35f) routeStage++;
+                float[] route = { 4.5f, 7.3f, 5.5f, 7.3f, 5.5f, 7.3f, 5.4f };
+                float target = route[routeStage];
+                float x = Get<float>("ballX");
+                Set("control", Mathf.Abs(target - x) < .18f ? 0 : target > x ? 1 : -1);
+                if (Time.time >= nextTrace)
+                {
+                    Debug.Log("SMOKE_ROUTE x=" + x.ToString("0.00") + " y=" + y.ToString("0.00") +
+                        " vx=" + Get<float>("velocityX").ToString("0.00") + " vy=" + Get<float>("velocityY").ToString("0.00") +
+                        " target=" + target.ToString("0.0") + " stage=" + routeStage + " falls=" + Get<int>("deaths"));
+                    nextTrace += 1f;
+                }
+                yield return null;
+            }
+            Set("control", 0);
+            Check(Get<bool>("won"), "Training map can be completed");
+            yield return Screenshot("03-training-clear.png");
+
             Call("ShowEditor");
             yield return new WaitForSeconds(.1f);
             Check(Get("mode").ToString() == "Editor", "Editor opens");
@@ -61,7 +90,7 @@ namespace BounceLab
             Set("brush", MapRules.Spike);
             Call("Paint", MapRules.Index(4, 4));
             Check(draft.tiles[MapRules.Index(4, 4)] == MapRules.Spike, "Tile painting");
-            yield return Screenshot("03-editor.png");
+            yield return Screenshot("04-editor.png");
 
             Call("TestDraft");
             yield return new WaitForSeconds(.2f);
@@ -69,7 +98,7 @@ namespace BounceLab
             Check(Get<bool>("returnToEditor"), "Test returns to editor");
             Call("Win");
             Check(Get<bool>("won"), "Goal completes level");
-            yield return Screenshot("04-clear.png");
+            yield return Screenshot("05-editor-clear.png");
             Check(errors == 0, "No player errors");
             Debug.Log("BOUNCELAB_PLAYER_SMOKE_PASS");
             Application.Quit(0);

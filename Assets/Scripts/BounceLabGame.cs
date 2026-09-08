@@ -13,7 +13,7 @@ namespace BounceLab
     {
         private const float Cell = 76f;
         private const float Radius = .33f;
-        private const string ApiConfigUrl = "https://ghtnql.github.io/BounceLab/api.json";
+        private const string ApiConfigUrl = "https://hsvai.github.io/BounceLab/api.json";
         private const string DraftKey = "BounceLabDraftV1";
         private enum Mode { Home, Play, Editor, Browse }
 

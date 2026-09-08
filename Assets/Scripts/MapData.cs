@@ -95,16 +95,15 @@ namespace BounceLab
                 map.tiles[Index(Width - 1, y)] = Block;
             }
             map.tiles[Index(2, 1)] = Spawn;
-            map.tiles[Index(4, 1)] = Spike;
-            map.tiles[Index(5, 1)] = Spike;
-            Platform(map, 1, 4, 2);
-            Platform(map, 5, 8, 4);
-            Platform(map, 2, 6, 6);
-            Platform(map, 6, 8, 8);
-            Platform(map, 2, 5, 10);
-            Platform(map, 5, 8, 12);
-            map.tiles[Index(7, 13)] = Goal;
-            map.tiles[Index(8, 8)] = Spring;
+            map.tiles[Index(1, 1)] = Spike;
+            Platform(map, 5, 8, 1);
+            Platform(map, 2, 6, 3);
+            Platform(map, 6, 8, 5);
+            Platform(map, 2, 6, 7);
+            Platform(map, 6, 8, 9);
+            Platform(map, 3, 6, 11);
+            map.tiles[Index(5, 12)] = Goal;
+            map.tiles[Index(6, 7)] = Spring;
             return map;
         }
 
