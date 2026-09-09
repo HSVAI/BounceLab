@@ -20,7 +20,10 @@ xcodebuild -project "$export_dir/Unity-iPhone.xcodeproj" \
   DEVELOPMENT_TEAM= ENABLE_BITCODE=NO COMPILER_INDEX_STORE_ENABLE=NO \
   2>&1 | tee "$output_dir/xcodebuild.log"
 
-app_dir="$output_dir/BounceLab.xcarchive/Products/Applications/Bounce Lab.app"
+shopt -s nullglob
+apps=("$output_dir/BounceLab.xcarchive/Products/Applications/"*.app)
+test "${#apps[@]}" -eq 1
+app_dir="${apps[0]}"
 test -d "$app_dir"
 app_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app_dir/Info.plist")
 test "$app_id" = 'com.ghtnql.bouncelab'
@@ -32,7 +35,7 @@ test ! -e "$app_dir/embedded.mobileprovision"
 
 package_dir="$(mktemp -d "$output_dir/package.XXXXXX")"
 mkdir -p "$package_dir/Payload"
-ditto "$app_dir" "$package_dir/Payload/Bounce Lab.app"
+ditto "$app_dir" "$package_dir/Payload/$(basename "$app_dir")"
 (cd "$package_dir" && ditto -c -k --keepParent Payload "$output_dir/BounceLab-unsigned.ipa")
 unzip -tq "$output_dir/BounceLab-unsigned.ipa"
 (cd "$output_dir" && shasum -a 256 BounceLab-unsigned.ipa > SHA256SUMS.txt)

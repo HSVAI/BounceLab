@@ -9,7 +9,7 @@ Build Bounce Lab (`HSVAI/BounceLab`) into an IPA and upload it to GitHub Release
 1. Linux Unity 2022.3.62f3 uses its existing Personal activation to export `Builds/iOS` with `./build.sh ios`.
 2. Package the exported Xcode project, record its source commit and SHA-256, and upload it to a draft GitHub prerelease.
 3. Manually dispatch `.github/workflows/ios-unsigned.yml` for that exact git tag. GitHub's standard `macos-15-intel` runner validates the export checksum and commit, then runs `Tools/build-ios-unsigned.sh`.
-4. Xcode builds an ARM64 `iphoneos` archive with signing disabled. The script packages the compiled app as `Payload/Bounce Lab.app` in `BounceLab-unsigned.ipa` and checks architecture, bundle identifier, platform, and ZIP integrity.
+4. Xcode builds an ARM64 `iphoneos` archive with signing disabled. The script discovers the generated `.app` (Unity normalizes the product name to `BounceLab.app`), packages it under `Payload/` in `BounceLab-unsigned.ipa`, and checks architecture, bundle identifier, platform, and ZIP integrity.
 5. Only a successful build attaches the IPA, checksum, and metadata and publishes the prerelease. Failed builds leave a draft with the input export; inspect Actions logs and do not report completion.
 
 ## Repeat
