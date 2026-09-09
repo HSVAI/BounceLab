@@ -10,7 +10,7 @@ test -s "$webgl/index.html"
 mkdir -p "$publish_dir"
 mkdir -p "$publish_dir/play"
 mkdir -p "$publish_dir/admin"
-install -m 644 "$apk" "$publish_dir/BounceLab-0.3.1.apk"
+install -m 644 "$apk" "$publish_dir/BounceLab-0.3.2.apk"
 cp -a "$webgl/." "$publish_dir/play/"
 find "$publish_dir/play" -type f -exec chmod 644 {} +
 install -m 644 Distribution/index.html "$publish_dir/index.html"
@@ -19,5 +19,5 @@ install -m 644 Builds/QA/02-play.png "$publish_dir/preview-game.png"
 install -m 644 Builds/QA/04-editor.png "$publish_dir/preview-editor.png"
 install -m 644 Builds/QA/06-community.png "$publish_dir/preview-community.png"
 cd "$publish_dir"
-sha256sum BounceLab-0.3.1.apk > SHA256SUMS.txt
+sha256sum BounceLab-0.3.2.apk > SHA256SUMS.txt
 echo "Published test artifacts to $publish_dir"

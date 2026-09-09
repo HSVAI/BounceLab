@@ -30,10 +30,11 @@ namespace BounceLab
         private BounceAudio sound;
         private Mode mode;
         private MapData currentMap, draft;
+        private MapData[] browseMaps;
         private Image[] editorCells;
         private Text statusText, timerText, deathText, brushText;
         private InputField nameInput, authorInput;
-        private int brush = MapRules.Block, control, deaths, pageVersion, draftRevision, clearedRevision = -1;
+        private int brush = MapRules.Block, control, deaths, pageVersion, draftRevision, clearedRevision = -1, browsePage;
         private float ballX, ballY, velocityX, velocityY, elapsed, deathTimer, backExitDeadline;
         private bool won, returnToEditor;
         private string apiBase = "";
@@ -115,7 +116,7 @@ namespace BounceLab
                 () => { sound.ToggleSfx(); ShowHome(); });
             statusText = Label(apiBase.Length > 0 ? "SERVER ONLINE" : "CONNECTING TO MAP SERVER...", 21,
                 apiBase.Length > 0 ? cyan : quiet, new Vector2(850, 50), new Vector2(0, -710), page);
-            Label("v0.3.1  ·  NEON REBOUND", 18, quiet, new Vector2(800, 40), new Vector2(0, -830), page);
+            Label("v0.3.2  ·  TEN LEVEL UPDATE", 18, quiet, new Vector2(800, 40), new Vector2(0, -830), page);
         }
 
         private void HandleBack()
@@ -362,7 +363,9 @@ namespace BounceLab
             }
             brushText = Label("", 21, cyan, new Vector2(850, 45), new Vector2(0, -535), page);
             UpdateBrushLabel();
-            statusText = Label("TAP A TILE TO PAINT", 21, quiet, new Vector2(900, 55), new Vector2(0, -595), page);
+            bool verified = clearedRevision == draftRevision;
+            statusText = Label(verified ? "TEST CLEAR VERIFIED · UPLOAD UNLOCKED" : "CLEAR THIS VERSION IN TEST BEFORE UPLOAD",
+                21, verified ? cyan : yellow, new Vector2(900, 55), new Vector2(0, -595), page);
             Button("TEST", new Vector2(270, 105), new Vector2(-300, -720), yellow, page, TestDraft);
             Button("SAVE", new Vector2(270, 105), new Vector2(0, -720), panelColor, page, SaveDraftFromFields);
             Button("UPLOAD", new Vector2(270, 105), new Vector2(300, -720), cyan, page, UploadDraft);
@@ -402,7 +405,12 @@ namespace BounceLab
             if (authorInput != null) draft.author = CleanName(authorInput.text, "MAKER");
             PlayerPrefs.SetString(DraftKey, JsonUtility.ToJson(draft));
             PlayerPrefs.Save();
-            if (statusText != null) statusText.text = "SAVED ON THIS DEVICE";
+            if (statusText != null)
+            {
+                bool verified = clearedRevision == draftRevision;
+                statusText.text = verified ? "SAVED · TEST CLEAR VERIFIED" : "SAVED · TEST CLEAR REQUIRED TO UPLOAD";
+                statusText.color = verified ? cyan : yellow;
+            }
         }
 
         private void TestDraft()
@@ -436,22 +444,42 @@ namespace BounceLab
 
         private void ShowBrowse()
         {
+            browseMaps = null;
+            browsePage = 0;
+            BuildBrowsePage("LOADING MAPS...", quiet);
+            StartCoroutine(LoadMaps(pageVersion));
+        }
+
+        private void BuildBrowsePage(string message, Color messageColor)
+        {
             NewPage(Mode.Browse);
             Label("COMMUNITY MAPS", 54, Color.white, new Vector2(800, 90), new Vector2(-50, 830), page).fontStyle = FontStyle.Bold;
             Button("×", new Vector2(90, 90), new Vector2(450, 835), quiet, page, ShowHome);
-            statusText = Label("LOADING MAPS...", 25, quiet, new Vector2(850, 70), new Vector2(0, 680), page);
-            StartCoroutine(LoadMaps(pageVersion));
+            statusText = Label(message, 25, messageColor, new Vector2(850, 70), new Vector2(0, 680), page);
         }
 
         private void RenderMaps(MapData[] maps, int version)
         {
             if (mode != Mode.Browse || version != pageVersion) return;
-            statusText.text = maps == null || maps.Length == 0 ? "NO MAPS YET — MAKE THE FIRST ONE" : "NEWEST MAPS";
-            if (maps == null) return;
-            int count = Mathf.Min(9, maps.Length);
+            browseMaps = maps ?? new MapData[0];
+            browsePage = 0;
+            RenderBrowsePage();
+        }
+
+        private void RenderBrowsePage()
+        {
+            const int pageSize = 8;
+            int total = browseMaps == null ? 0 : browseMaps.Length;
+            int pages = Mathf.Max(1, Mathf.CeilToInt(total / (float)pageSize));
+            browsePage = Mathf.Clamp(browsePage, 0, pages - 1);
+            int first = browsePage * pageSize;
+            int count = Mathf.Min(pageSize, total - first);
+            string message = total == 0 ? "NO MAPS YET — MAKE THE FIRST ONE" :
+                "MAPS " + (first + 1) + "–" + (first + count) + " / " + total + "  ·  PAGE " + (browsePage + 1) + "/" + pages;
+            BuildBrowsePage(message, total == 0 ? quiet : cyan);
             for (int i = 0; i < count; i++)
             {
-                MapData selected = maps[i];
+                MapData selected = browseMaps[first + i];
                 float y = 565 - i * 145;
                 var item = Button("", new Vector2(870, 120), new Vector2(0, y), panelColor, page, () => StartPlay(selected, false));
                 Label(selected.name, 29, Color.white, new Vector2(540, 50), new Vector2(-120, 20), item).fontStyle = FontStyle.Bold;
@@ -459,6 +487,12 @@ namespace BounceLab
                     18, quiet, new Vector2(740, 40), new Vector2(-20, -28), item);
                 Label("▶", 36, cyan, new Vector2(70, 70), new Vector2(370, 0), item);
             }
+            if (browsePage > 0)
+                Button("PREV", new Vector2(260, 80), new Vector2(-300, -680), panelColor, page,
+                    () => { browsePage--; RenderBrowsePage(); });
+            if (browsePage + 1 < pages)
+                Button("NEXT", new Vector2(260, 80), new Vector2(300, -680), panelColor, page,
+                    () => { browsePage++; RenderBrowsePage(); });
             Button("REFRESH", new Vector2(340, 80), new Vector2(0, -800), quiet, page, ShowBrowse);
         }
 
@@ -499,7 +533,7 @@ namespace BounceLab
                 if (mode == Mode.Browse && version == pageVersion) { statusText.text = "MAP SERVER IS OFFLINE"; statusText.color = coral; }
                 yield break;
             }
-            using (var request = UnityWebRequest.Get(apiBase + "/api/maps?limit=9"))
+            using (var request = UnityWebRequest.Get(apiBase + "/api/maps?limit=20"))
             {
                 request.timeout = 10;
                 yield return request.SendWebRequest();

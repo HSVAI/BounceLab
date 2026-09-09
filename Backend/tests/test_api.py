@@ -3,7 +3,8 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from bouncelab_maps import HEIGHT, WIDTH, _default_maps, create_app
+from bouncelab_maps import HEIGHT, WIDTH, _default_maps, _official_map_specs, create_app
+from bouncelab_maps.physics_check import complete_route
 
 
 def valid_map():
@@ -27,17 +28,21 @@ class ApiTests(unittest.TestCase):
     def test_health_and_seed_maps(self):
         self.assertEqual(self.client.get("/health").status_code, 200)
         body = self.client.get("/api/maps").get_json()
-        self.assertEqual(len(body["maps"]), 3)
+        self.assertEqual(len(body["maps"]), 10)
 
-    def test_official_maps_have_balanced_shapes(self):
-        first, fork, tower = _default_maps()
-        self.assertEqual([first[0], fork[0], tower[0]], ["첫 번째 바운스", "갈림길", "스프링 타워"])
-        self.assertEqual(first[2].count(2), 8)
-        self.assertEqual(first[2][14 * WIDTH + 6], 3)
-        self.assertEqual(fork[2].count(2), 1)
-        self.assertEqual(fork[2][WIDTH + 4], 1)
-        self.assertEqual(tower[2].count(4), 6)
-        self.assertEqual(tower[2][8 * WIDTH + 8], 0)
+    def test_official_maps_are_unique_and_physically_completable(self):
+        maps = _default_maps()
+        specs = _official_map_specs()
+        self.assertEqual(len(maps), 10)
+        self.assertEqual(len({item[0] for item in maps}), 10)
+        for (name, author, tiles), spec in zip(maps, specs):
+            with self.subTest(map=name):
+                self.assertEqual(author, "SYSTEM")
+                self.assertEqual(tiles.count(5), 1)
+                self.assertEqual(tiles.count(3), 1)
+                self.assertGreaterEqual(sum(tile in (1, 4) for tile in tiles), WIDTH)
+                for frame_rate in (50, 60, 75):
+                    self.assertLess(complete_route(tiles, spec["route"], 1 / frame_rate), 15)
 
     def test_admin_can_hide_and_restore_user_map(self):
         with patch.dict("os.environ", {"BOUNCELAB_ADMIN_PASSWORD": "test-password",

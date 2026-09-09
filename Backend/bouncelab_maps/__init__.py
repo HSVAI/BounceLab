@@ -32,44 +32,142 @@ ADMIN_CONSOLE = """<!doctype html><html lang="ko"><meta charset="utf-8">
 </tbody></table></main></html>"""
 
 
+def _official_map_specs():
+    """Curated maps plus the intended route used by the physics regression test.
+
+    Platform and pad entries are ``(y, first_x, last_x)``.  Route entries add
+    the side (``L`` or ``R``) from which the ball must clear the next ledge.
+    Keeping the route beside the layout makes every shipped map prove that it
+    is completable under the same movement constants as the Unity client.
+    """
+    return [
+        {
+            "name": "엇박자 계단",
+            "platforms": [(1, 4, 7), (3, 2, 5), (5, 5, 8), (7, 2, 5),
+                          (9, 5, 8), (11, 2, 5), (13, 4, 7)],
+            "spikes": [(1, 1), (8, 3), (1, 5), (8, 7), (1, 9), (8, 11)],
+            "spawn": (2, 1), "goal": (5, 14),
+            "route": [(1, 4, 7, "L"), (3, 2, 5, "R"), (5, 5, 8, "L"),
+                      (7, 2, 5, "R"), (9, 5, 8, "L"), (11, 2, 5, "R"),
+                      (13, 4, 7, "L")],
+        },
+        {
+            "name": "브레이크 연습",
+            "platforms": [(1, 5, 8), (3, 3, 6), (5, 1, 4), (7, 4, 7),
+                          (9, 2, 5), (11, 5, 8), (13, 3, 6)],
+            "spikes": [(1, 3), (8, 5), (1, 7), (8, 9), (1, 11)],
+            "spawn": (2, 1), "goal": (4, 14),
+            "route": [(1, 5, 8, "L"), (3, 3, 6, "R"), (5, 1, 4, "R"),
+                      (7, 4, 7, "L"), (9, 2, 5, "R"), (11, 5, 8, "L"),
+                      (13, 3, 6, "R")],
+        },
+        {
+            "name": "두 개의 길",
+            "platforms": [(1, 3, 6), (3, 1, 3), (3, 5, 8), (5, 3, 6),
+                          (7, 1, 4), (7, 6, 8), (9, 3, 6), (11, 1, 3),
+                          (11, 5, 8), (13, 3, 6)],
+            "spikes": [(8, 1), (1, 5), (8, 9), (1, 13)],
+            "spawn": (2, 1), "goal": (4, 14),
+            "route": [(1, 3, 6, "L"), (3, 5, 8, "L"), (5, 3, 6, "R"),
+                      (7, 1, 4, "R"), (9, 3, 6, "L"), (11, 5, 8, "L"),
+                      (13, 3, 6, "R")],
+        },
+        {
+            "name": "가시 정원",
+            "platforms": [(1, 4, 7), (3, 2, 5), (5, 4, 7), (7, 2, 5),
+                          (9, 4, 7), (11, 2, 5), (13, 4, 7)],
+            "spikes": [(1, 1), (8, 1), (7, 3), (1, 5), (8, 5), (7, 7),
+                       (1, 9), (8, 9), (7, 11), (1, 13)],
+            "spawn": (2, 1), "goal": (5, 14),
+            "route": [(1, 4, 7, "L"), (3, 2, 5, "R"), (5, 4, 7, "L"),
+                      (7, 2, 5, "R"), (9, 4, 7, "L"), (11, 2, 5, "R"),
+                      (13, 4, 7, "L")],
+        },
+        {
+            "name": "좁은 착지",
+            "platforms": [(1, 4, 6), (3, 2, 4), (5, 5, 7), (7, 3, 5),
+                          (9, 6, 8), (11, 3, 5), (13, 5, 7)],
+            "spikes": [(1, 3), (8, 3), (1, 7), (8, 11)],
+            "spawn": (2, 1), "goal": (6, 14),
+            "route": [(1, 4, 6, "L"), (3, 2, 4, "R"), (5, 5, 7, "L"),
+                      (7, 3, 5, "R"), (9, 6, 8, "L"), (11, 3, 5, "R"),
+                      (13, 5, 7, "L")],
+        },
+        {
+            "name": "첫 스프링",
+            "platforms": [(5, 3, 6), (7, 5, 8), (9, 2, 5), (11, 4, 7),
+                          (13, 3, 6)],
+            "pads": [(1, 4, 7)],
+            "spikes": [(1, 1), (8, 5), (1, 9), (8, 11)],
+            "spawn": (2, 1), "goal": (4, 14),
+            "route": [(1, 4, 7, "L"), (5, 3, 6, "R"), (7, 5, 8, "L"),
+                      (9, 2, 5, "R"), (11, 4, 7, "L"), (13, 3, 6, "R")],
+        },
+        {
+            "name": "스프링 전환",
+            "platforms": [(5, 2, 5), (11, 2, 5), (13, 4, 7)],
+            "pads": [(1, 5, 8), (7, 4, 7)],
+            "spikes": [(1, 1), (8, 5), (1, 7), (8, 11)],
+            "spawn": (2, 1), "goal": (5, 14),
+            "route": [(1, 5, 8, "L"), (5, 2, 5, "R"), (7, 4, 7, "L"),
+                      (11, 2, 5, "R"), (13, 4, 7, "L")],
+        },
+        {
+            "name": "벽 사이",
+            "platforms": [(1, 3, 5), (3, 5, 7), (5, 2, 4), (7, 4, 6),
+                          (9, 6, 8), (11, 3, 5), (13, 5, 7),
+                          (2, 8, 8), (6, 1, 1), (10, 2, 2)],
+            "spikes": [(1, 3), (8, 7), (1, 11)],
+            "spawn": (2, 1), "goal": (6, 14),
+            "route": [(1, 3, 5, "L"), (3, 5, 7, "L"), (5, 2, 4, "R"),
+                      (7, 4, 6, "L"), (9, 6, 8, "L"), (11, 3, 5, "R"),
+                      (13, 5, 7, "L")],
+        },
+        {
+            "name": "스프링 회랑",
+            "platforms": [(5, 5, 8), (7, 3, 6), (13, 4, 7)],
+            "pads": [(1, 4, 6), (9, 1, 4)],
+            "spikes": [(1, 1), (8, 1), (1, 5), (8, 7), (8, 9), (1, 13)],
+            "spawn": (2, 1), "goal": (5, 14),
+            "route": [(1, 4, 6, "L"), (5, 5, 8, "L"), (7, 3, 6, "R"),
+                      (9, 1, 4, "R"), (13, 4, 7, "L")],
+        },
+        {
+            "name": "네온 정상",
+            "platforms": [(1, 4, 7), (3, 2, 5), (9, 2, 5), (11, 5, 8),
+                          (13, 3, 6)],
+            "pads": [(5, 4, 7)],
+            "spikes": [(1, 1), (8, 1), (8, 3), (1, 5), (8, 9), (1, 11),
+                       (8, 13)],
+            "spawn": (2, 1), "goal": (4, 14),
+            "route": [(1, 4, 7, "L"), (3, 2, 5, "R"), (5, 4, 7, "L"),
+                      (9, 2, 5, "R"), (11, 5, 8, "L"), (13, 3, 6, "R")],
+        },
+    ]
+
+
 def _default_maps():
-    def level(name, author, platforms, spikes, spawn, goal, pads=()):
+    def level(spec):
         tiles = [0] * (WIDTH * HEIGHT)
         for x in range(WIDTH):
             tiles[x] = 1
         for y in range(HEIGHT):
             tiles[y * WIDTH] = tiles[y * WIDTH + WIDTH - 1] = 1
-        for x, y in platforms:
-            tiles[y * WIDTH + x] = 1
-        for x, y in spikes:
+        for y, first_x, last_x in spec.get("platforms", ()):
+            for x in range(first_x, last_x + 1):
+                tiles[y * WIDTH + x] = 1
+        for y, first_x, last_x in spec.get("pads", ()):
+            for x in range(first_x, last_x + 1):
+                tiles[y * WIDTH + x] = 4
+        for x, y in spec.get("spikes", ()):
             tiles[y * WIDTH + x] = 2
-        for x, y in pads:
-            tiles[y * WIDTH + x] = 4
+        spawn = spec["spawn"]
+        goal = spec["goal"]
         tiles[spawn[1] * WIDTH + spawn[0]] = 5
         tiles[goal[1] * WIDTH + goal[0]] = 3
-        return name, author, tiles
+        return spec["name"], "SYSTEM", tiles
 
-    return [
-        level("첫 번째 바운스", "SYSTEM",
-              [(x, 1) for x in range(4, 7)] + [(x, 3) for x in range(2, 5)] +
-              [(x, 5) for x in range(5, 8)] + [(x, 7) for x in range(2, 5)] +
-              [(x, 9) for x in range(5, 8)] + [(x, 11) for x in range(2, 5)] +
-              [(x, 13) for x in range(5, 8)],
-              [(1, 1), (7, 1), (1, 3), (8, 5), (1, 7), (8, 9), (1, 11), (8, 13)],
-              (2, 1), (6, 14)),
-        level("갈림길", "SYSTEM",
-              [(x, 1) for x in range(1, 5)] +
-              [(x, 3) for x in range(1, 4)] + [(x, 3) for x in range(6, 9)] +
-              [(x, 5) for x in range(3, 7)] +
-              [(x, 7) for x in range(1, 4)] + [(x, 7) for x in range(6, 9)] +
-              [(x, 9) for x in range(3, 7)] + [(x, 11) for x in range(5, 8)],
-              [(8, 1)], (7, 1), (6, 12), [(7, 7)]),
-        level("스프링 타워", "SYSTEM",
-              [(x, 1) for x in range(5, 9)] + [(x, 4) for x in range(2, 7)] +
-              [(x, 7) for x in range(6, 9)] + [(x, 10) for x in range(2, 7)],
-              [(1, 1)], (2, 1), (5, 11),
-              [(5, 1), (6, 1), (5, 4), (6, 4), (6, 7), (7, 7)]),
-    ]
+    return [level(spec) for spec in _official_map_specs()]
 
 
 def create_app(database_path=None):
@@ -232,13 +330,19 @@ def _initialize(path):
             CREATE TABLE IF NOT EXISTS uploads (client_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
             CREATE INDEX IF NOT EXISTS idx_uploads_client_time ON uploads(client_hash, created_at);
         """)
-        for index, (name, author, tiles) in enumerate(_default_maps(), 1):
+        defaults = _default_maps()
+        seeded_at = int(time.time())
+        for index, (name, author, tiles) in enumerate(defaults, 1):
             db.execute(
                 """INSERT INTO maps(id,name,author,width,height,tiles,created_at) VALUES(?,?,?,?,?,?,?)
                    ON CONFLICT(id) DO UPDATE SET name=excluded.name, author=excluded.author,
-                     width=excluded.width, height=excluded.height, tiles=excluded.tiles""",
+                     width=excluded.width, height=excluded.height,
+                     created_at=CASE WHEN maps.tiles <> excluded.tiles THEN excluded.created_at ELSE maps.created_at END,
+                     plays=CASE WHEN maps.tiles <> excluded.tiles THEN 0 ELSE maps.plays END,
+                     completions=CASE WHEN maps.tiles <> excluded.tiles THEN 0 ELSE maps.completions END,
+                     tiles=excluded.tiles""",
                 (f"official-{index}", name, author, WIDTH, HEIGHT,
-                 json.dumps(tiles, separators=(",", ":")), int(time.time()) - (4-index)))
+                 json.dumps(tiles, separators=(",", ":")), seeded_at - (index - 1)))
 
 
 def _validate(payload):
