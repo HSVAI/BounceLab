@@ -10,6 +10,10 @@
 *.apk
 !docs/*.apk
 *.aab
+*.ipa
+*.p12
+*.mobileprovision
+AuthKey_*.p8
 *.unitypackage
 .vs/
 .idea/

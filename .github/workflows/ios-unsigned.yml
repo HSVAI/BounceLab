@@ -1,0 +1,73 @@
+name: Build unsigned iOS IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_tag:
+        description: Draft release containing BounceLab-Xcode.tar.gz
+        required: true
+        type: string
+      export_sha256:
+        description: SHA-256 of the exported Xcode archive
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bouncelab-ios-unsigned
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPORT_TAG: ${{ inputs.export_tag }}
+      EXPORT_SHA256: ${{ inputs.export_sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Fetch and verify Unity export
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPORT_TAG" =~ ^ios-proof-[a-zA-Z0-9.-]+$ ]]
+          [[ "$EXPORT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          mkdir -p "$RUNNER_TEMP/ios-input" "$RUNNER_TEMP/ios-export"
+          gh release download "$EXPORT_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern BounceLab-Xcode.tar.gz --dir "$RUNNER_TEMP/ios-input"
+          cd "$RUNNER_TEMP/ios-input"
+          printf '%s  BounceLab-Xcode.tar.gz\n' "$EXPORT_SHA256" | shasum -a 256 --check
+          tar -xzf BounceLab-Xcode.tar.gz -C "$RUNNER_TEMP/ios-export"
+          source_commit=$(cat "$RUNNER_TEMP/ios-export/SOURCE_COMMIT.txt")
+          [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse "$EXPORT_TAG^{commit}")" = "$source_commit"
+          test "$(git rev-parse HEAD)" = "$source_commit"
+          echo "SOURCE_COMMIT=$source_commit" >> "$GITHUB_ENV"
+      - name: Compile physical iOS ARM64 and package unsigned IPA
+        shell: bash
+        run: bash Tools/build-ios-unsigned.sh "$RUNNER_TEMP/ios-export" "$RUNNER_TEMP/ios-output"
+      - name: Preserve build log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ios-build-log
+          path: ${{ runner.temp }}/ios-output/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Attach verified IPA and publish prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$EXPORT_TAG" --repo "$GITHUB_REPOSITORY" \
+            "$RUNNER_TEMP/ios-output/BounceLab-unsigned.ipa" \
+            "$RUNNER_TEMP/ios-output/SHA256SUMS.txt" \
+            "$RUNNER_TEMP/ios-output/BUILD-INFO.txt"
+          gh release edit "$EXPORT_TAG" --repo "$GITHUB_REPOSITORY" \
+            --draft=false --prerelease --latest=false

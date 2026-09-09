@@ -11,6 +11,26 @@ namespace BounceLab.Editor
     {
         private const string ScenePath = "Assets/Scenes/Main.unity";
 
+        // Export only: the macOS workflow compiles for physical ARM64 iOS devices.
+        // No player launch, simulator, or gameplay tests are part of this path.
+        public static void ExportIOS()
+        {
+            EnsureScene();
+            ConfigureCommon();
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, "com.ghtnql.bouncelab");
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.iOS, ScriptingImplementation.IL2CPP);
+            PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
+            PlayerSettings.iOS.targetOSVersionString = "13.0";
+            PlayerSettings.iOS.appleEnableAutomaticSigning = false;
+            PlayerSettings.iOS.buildNumber = "1";
+            EditorUserBuildSettings.development = false;
+            Directory.CreateDirectory("Builds/iOS");
+            var report = BuildPipeline.BuildPlayer(new[] { ScenePath }, "Builds/iOS", BuildTarget.iOS, BuildOptions.None);
+            if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                throw new System.Exception("iOS export failed: " + report.summary.result);
+            Debug.Log("BOUNCELAB_IOS_EXPORT_OK bytes=" + report.summary.totalSize);
+        }
+
         public static void BuildAndroid()
         {
             VerifyRules();
