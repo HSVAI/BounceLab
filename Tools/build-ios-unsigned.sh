@@ -28,8 +28,8 @@ test -d "$app_dir"
 app_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app_dir/Info.plist")
 test "$app_id" = 'com.ghtnql.bouncelab'
 executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app_dir/Info.plist")
-lipo -verify_arch arm64 "$app_dir/$executable"
-lipo -verify_arch arm64 "$app_dir/Frameworks/UnityFramework.framework/UnityFramework"
+lipo "$app_dir/$executable" -verify_arch arm64
+lipo "$app_dir/Frameworks/UnityFramework.framework/UnityFramework" -verify_arch arm64
 test "$(/usr/libexec/PlistBuddy -c 'Print :DTPlatformName' "$app_dir/Info.plist")" = iphoneos
 test ! -e "$app_dir/embedded.mobileprovision"
 

@@ -37,6 +37,12 @@ If only the workflow/packaging script needs fixing, reuse the draft export: disp
 - iOS module: `https://download.unity3d.com/download_unity/96770f904ca7/LinuxEditorTargetInstaller/UnitySetup-iOS-Support-for-Editor-2022.3.62f3.tar.xz`; official release metadata records MD5 `ba322ae18c0f5035620f849eec80beed`. Cached in `/home/ghtnql/.cache/unity-modules/`.
 - Apple signing credentials were not found during initial setup. They are not required for this unsigned build proof, but are required for an installable distribution build. Do not call ZIP packaging alone an Apple-signed export.
 
+## Troubleshooting learned from actual builds
+
+- `gh run view --log-failed` may return empty output despite a failed run. Read `gh api repos/HSVAI/BounceLab/actions/jobs/JOB_ID/logs` or download the `ios-build-log` artifact.
+- Xcode 16.4 successfully archived this Unity export on macOS. The first post-archive check failed because Apple's `lipo -verify_arch` consumes subsequent arguments as architecture names. Correct usage: `lipo "$binary" -verify_arch arm64` (input file first).
+- An `ARCHIVE SUCCEEDED` log alone is not enough: require the IPA, checksum, and public Release assets before reporting completion.
+
 ## Scope boundaries
 
 The standard macOS runner builds only this project's iOS code. No App Store/TestFlight upload, paid runner, account purchase, or new Apple agreement is part of this workflow. The WebGL game and GameLibrary already have their own deployment.
