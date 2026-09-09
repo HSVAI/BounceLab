@@ -26,6 +26,8 @@ gh release view TAG --repo HSVAI/BounceLab
 
 The helper exports, packages, creates a unique tag/draft, and dispatches the Mac build. Monitor that run to completion; do not rebuild Linux/Android/WebGL or run gameplay tests for this request.
 
+If only the workflow/packaging script needs fixing, reuse the draft export: dispatch the updated workflow with `--ref main`, the existing `export_tag`, and the original `export_sha256`. The source tag must match `SOURCE_COMMIT.txt` and be an ancestor of the workflow commit. `BUILD-INFO.txt` records these two commits separately. Changing game code requires a new Unity export.
+
 ## Authentication and dependencies
 
 - GitHub: existing `gh` authentication on this host, repository `HSVAI/BounceLab`. The workflow uses its repository-scoped `GITHUB_TOKEN` with `contents: write` for Release assets.

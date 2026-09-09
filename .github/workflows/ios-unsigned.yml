@@ -47,8 +47,10 @@ jobs:
           tar -xzf BounceLab-Xcode.tar.gz -C "$RUNNER_TEMP/ios-export"
           source_commit=$(cat "$RUNNER_TEMP/ios-export/SOURCE_COMMIT.txt")
           [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]]
-          test "$(git rev-parse "$EXPORT_TAG^{commit}")" = "$source_commit"
-          test "$(git rev-parse HEAD)" = "$source_commit"
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse "$EXPORT_TAG^{commit}")" = "$source_commit"
+          # Allow a newer packaging workflow to reuse an unchanged Unity export.
+          # BUILD-INFO records the app source and workflow commits separately.
+          git -C "$GITHUB_WORKSPACE" merge-base --is-ancestor "$source_commit" HEAD
           echo "SOURCE_COMMIT=$source_commit" >> "$GITHUB_ENV"
       - name: Compile physical iOS ARM64 and package unsigned IPA
         shell: bash
