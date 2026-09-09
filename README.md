@@ -40,6 +40,12 @@ Unity 2022.3.62f3 Personal과 Android Build Support를 사용합니다.
 Android 산출물은 `Builds/Android/BounceLab.apk`, 브라우저 산출물은 `Builds/WebGL/`입니다. Android 6.0 이상, ARM64, OpenGL ES 3을 대상으로 합니다.
 배포 페이지와 웹 플레이 주소는 <https://hsvai.github.io/BounceLab/> 및 <https://hsvai.github.io/BounceLab/play/>입니다.
 
+## iOS 빌드 확인용 IPA
+
+[GitHub Release](https://github.com/HSVAI/BounceLab/releases/tag/ios-proof-20260909-103135-b1b86b5)에 ARM64 `BounceLab-unsigned.ipa`를 공개했습니다. Linux에서 Unity Xcode 프로젝트를 내보내고 GitHub macOS에서 컴파일했습니다.
+
+**미서명 빌드 확인용 파일**이므로 iPhone에 바로 설치하거나 TestFlight/App Store에 업로드할 수 없습니다. 실행·기기·시뮬레이터 테스트는 하지 않았습니다. 재빌드 명령, 인증 설정 위치, 성공한 작업과 주의사항은 [iOS 빌드 인계 문서](Tools/IOS-BUILD.md)에 있습니다.
+
 ## 백엔드
 
 `Backend/`는 Flask, Waitress, SQLite로 구성된 독립 서비스입니다. 맵 스키마 검증, 요청 크기 제한,

@@ -1,5 +1,20 @@
 # Reproducible iOS build from this Linux workspace
 
+## Verified result — 2026-09-10
+
+- **Completed:** physical-device ARM64 compilation, unsigned IPA packaging, and public GitHub prerelease upload.
+- Release: https://github.com/HSVAI/BounceLab/releases/tag/ios-proof-20260909-103135-b1b86b5
+- Successful run: https://github.com/HSVAI/BounceLab/actions/runs/34372417763
+- App source commit: `b1b86b5d11fba37bd16ac294a3e0c3fede010221`.
+- Successful workflow commit: `5b33446ffbbae9b3c54c688ee3ab193406c24a9b`.
+- Environment: Unity 2022.3.62f3 Linux export → macOS 15.7.9 / Xcode 16.4 (16F6) / iPhoneOS SDK 18.5 on `macos-15-intel`.
+- IPA: `BounceLab-unsigned.ipa`, **11,900,303 bytes**, SHA-256 `636f97eaa0a7b3ef54d27caae3c909a0e1d71e6c8a22724c7c2af0dff7aa52ad`.
+- Release also contains `BounceLab-Xcode.tar.gz`, `BUILD-INFO.txt`, and `SHA256SUMS.txt`.
+- Published IPA was downloaded back to `Builds/iOSRelease/verified-34372417763/`; SHA-256 matched and ZIP integrity passed. No game/device/simulator was launched.
+- **Not distribution-ready:** no Apple signature/provisioning. Xcode also reported a missing 1024×1024 App Store icon. Before an actual store submission, provide signing assets/icon and re-check Apple's then-current Xcode/SDK requirements; this proof did not validate store eligibility.
+
+This task is finished. Do not repeat the build merely to rediscover whether the Linux → Mac → IPA path works. Use the commands below only for a requested new build.
+
 ## User's accepted scope
 
 Build Bounce Lab (`HSVAI/BounceLab`) into an IPA and upload it to GitHub Release. Do not run the game, a simulator, or device tests. Reuse existing authentication; no routine confirmation is needed. Label an unsigned IPA honestly: it is not installable or ready for TestFlight/App Store.
